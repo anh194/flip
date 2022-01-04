@@ -2,13 +2,11 @@
 
 pragma solidity ^0.8.0;
 import "../node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../node_modules/@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 
 
 contract Match is VRFConsumerBase{
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
     string public name;
     address owner;
@@ -24,21 +22,21 @@ contract Match is VRFConsumerBase{
     uint256 internal fee;
     uint256 public randomResult;
 
+    address payable public master;
+
     event randomReturn(bytes32 requestId, uint256 randomness);
     event TransferSent(address destAddr, uint256 amount);
-    event finalWinner(address winner, uint256 randomResult);
-    event test(uint256 tok);
 
 
-    uint256 public portion;
     uint256 public winnerPortion;
+    uint256 public masterPortion;
 
-    function getPortion() public view  returns (uint256){
-        return portion;
+    function getMasterPortion() public view  returns (uint256){
+        return masterPortion;
     }
 
     function getWinnerPortion() public view  returns (uint256){
-        return portion;
+        return winnerPortion;
     }
 
 
@@ -104,19 +102,14 @@ contract Match is VRFConsumerBase{
     function payWinner() external {
         require(winner != address(0), "has not setWinner");
 
-        address maticAddress = 0x0000000000000000000000000000000000001010;
-        uint256 maticBalance = IERC20(maticAddress).balanceOf(address(this));
-
+        uint256 maticBalance = address(this).balance;
         require(maticBalance != 0, "0 matic");
 
-        // portion  = maticBalance.div(uint256(10));
-        // winnerPortion = maticBalance / 10 * 9;
+        winnerPortion = maticBalance / 100 * 97;
+        masterPortion = address(this).balance -  winnerPortion;
 
-        IERC20(maticAddress).safeTransfer(winner, maticBalance);
-        // IERC20(maticAddress).safeTransfer(master, IERC20(maticAddress).balanceOf(address(this)));
-        emit test(maticBalance);
-        emit test(winnerPortion);
-
+        winner.transfer(winnerPortion);
+        master.transfer(masterPortion);
     }
 
     /** 
@@ -153,8 +146,8 @@ contract Match is VRFConsumerBase{
     }
     
 
-    function init(address _owner, address payable _player1, address payable _player2, uint256 _player1Choice, uint256 _player2Choice, uint256 _wager) external {
-        // require(bytes(name).length == 0, "Already init"); // ensure not init'd already.
+    function init(address _owner, address payable _player1, address payable _player2, uint256 _player1Choice, uint256 _player2Choice, uint256 _wager, address payable _master) external {
+        require(bytes(name).length == 0, "Already init"); // ensure not init'd already.
         name = "clone";
         owner = _owner;
         keyHash = 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4;
@@ -164,6 +157,7 @@ contract Match is VRFConsumerBase{
         player1Choice = _player1Choice;
         player2Choice = _player2Choice;
         wager = _wager;
+        master = _master;
     }
 
 

@@ -12,6 +12,7 @@ import "../node_modules/@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 contract Factory is CloneFactory {
     using SafeERC20 for IERC20;
     address masterContract;
+    address payable public _master;
     event MatchCreated(address newThingAddress);
 
     constructor(address _masterContract){
@@ -30,7 +31,7 @@ contract Factory is CloneFactory {
         IERC20 tokenLINK = IERC20(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
         tokenLINK.safeTransfer(matchContract, 0.1 * 10 ** 18);
 
-        Match(matchContract).init(address(this), _player1, _player2, _player1Choice, _player2Choice, _wager);
+        Match(matchContract).init(address(this), _player1, _player2, _player1Choice, _player2Choice, _wager, _master);
         emit MatchCreated(matchContract);
         return matchContract;
     }
